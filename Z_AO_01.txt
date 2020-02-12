@@ -1,0 +1,34 @@
+*&---------------------------------------------------------*
+*& Report  Z_AO_01                                         *
+*& ABAP Objects Demo                                       *
+*& einfache Klasse mit einer Eigenschaft                   *
+*&---------------------------------------------------------*
+
+REPORT  z_ao_01.
+
+CLASS lcl_konto DEFINITION.
+  PUBLIC SECTION.
+    DATA besitzer(20).
+  PRIVATE SECTION.
+    DATA  p_kontostand TYPE i VALUE 0.
+ENDCLASS.                    "lcl_Konto DEFINITION
+
+CLASS lcl_konto IMPLEMENTATION.
+
+
+ENDCLASS.                    "lcl_konto IMPLEMENTATION
+
+
+
+data ref_konto1 type ref to lcl_konto.
+data ref_konto2 type ref to lcl_konto.
+
+start-of-selection.
+
+create object ref_konto1.
+create object ref_konto2.
+
+ref_konto1->besitzer = 'A. Jung'.
+ref_konto2->besitzer = 't. Bürghül'.
+
+write ref_konto1->besitzer.

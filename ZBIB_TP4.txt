@@ -1,0 +1,138 @@
+*&---------------------------------------------------------*
+*& Report  ZBIB_TP4                                        *
+*& Pflegedialog aufrufen                                   *
+*& Die Tabellenpflege muss zuvor mit der SE54 für die      *
+*& Tabelle ZBIBVERLAGE angelegt worden sein                *
+*&---------------------------------------------------------*
+
+REPORT  zbib_tp4 .
+
+TABLES zbibverlage.
+
+DATA it_exkl LIKE vimexclfun
+OCCURS 0 WITH HEADER LINE.
+DATA it_sellist LIKE vimsellist
+OCCURS 0 WITH HEADER LINE.
+DATA it_header LIKE vimdesc
+OCCURS 0 WITH HEADER LINE.
+DATA it_namtab LIKE vimnamtab
+OCCURS 0 WITH HEADER LINE.
+
+
+DATA BEGIN OF wa_inout.
+        INCLUDE STRUCTURE zbibverlage.
+        INCLUDE STRUCTURE vimflagtab.
+DATA END OF wa_inout.
+
+DATA it_total LIKE wa_inout
+OCCURS 0 WITH HEADER LINE.
+DATA it_extract LIKE wa_inout
+OCCURS 0 WITH HEADER LINE.
+
+DATA it_e071k LIKE e071k OCCURS 0 WITH HEADER LINE.
+
+DATA command LIKE sy-ucomm.
+
+SELECT * FROM zbibverlage
+INTO CORRESPONDING FIELDS OF TABLE it_total.
+
+CALL FUNCTION 'VIEW_ENQUEUE'
+EXPORTING
+*	ACTION                     = 'E'
+enqueue_mode               = 'E'
+view_name                  = 'ZBIBVERLAGE'
+*	ENQUEUE_RANGE              = ' '
+*	TABLES
+*	SELLIST                    =
+ EXCEPTIONS
+   client_reference           = 1
+   foreign_lock               = 2
+   invalid_action             = 3
+   invalid_enqueue_mode       = 4
+   system_failure             = 5
+   table_not_found            = 6
+   OTHERS                     = 7.
+
+IF sy-subrc <> 0.
+  MESSAGE e008(zbib). " Fehler bei Sperren ....
+ENDIF.
+
+CALL FUNCTION 'VIEW_GET_DDIC_INFO'
+EXPORTING
+viewname                    = 'ZBIBVERLAGE'
+*	VARIANT_FOR_SELECTION       = ' '
+TABLES
+sellist                     = it_sellist
+x_header                    = it_header
+x_namtab                    = it_namtab
+ EXCEPTIONS
+   no_tvdir_entry              = 1
+   table_not_found             = 2
+   OTHERS                      = 3.
+
+
+IF sy-subrc <> 0.
+  MESSAGE e007(zbib). " Fehler bei VIEW_GET_....
+ENDIF.
+
+CALL FUNCTION 'VIEW_MAINTENANCE_LOW_LEVEL'
+EXPORTING
+*	CORR_NUMBER                       = ' '
+*	FCODE                             = 'RDED'
+view_action                       = 'U'
+view_name                         = 'ZBIBVERLAGE'
+*	RFC_DESTINATION_FOR_UPGRADE       = ' '
+*	CLIENT_FOR_UPGRADE                = ' '
+*	COMPLEX_SELCONDS_USED             = ' '
+*	NO_WARNING_FOR_CLIENTINDEP        = ' '
+*	OC_INST                           =
+IMPORTING
+*	LAST_ACT_ENTRY                    =
+ucomm                             = command
+*	UPDATE_REQUIRED                   =
+*	CORR_NUMBER                       =
+*	ACTION_OUT                        =
+TABLES
+corr_keytab                       = it_e071k
+dba_sellist                       = it_sellist
+dpl_sellist                       = it_sellist
+excl_cua_funct                    = it_exkl
+extract                           = it_extract
+total                             = it_total
+x_header                          = it_header
+x_namtab                          = it_namtab
+ EXCEPTIONS
+   function_not_found                = 1
+   missing_corr_number               = 2
+   no_value_for_subset_ident         = 3
+   saving_correction_failed          = 4
+   OTHERS                            = 5.
+
+IF sy-subrc <> 0.
+  MESSAGE e006(zbib). " Fehler beim Aufruf
+ENDIF.
+
+IF command = 'SAVE'.
+  LOOP AT it_extract WHERE action = 'U'.
+    MOVE-CORRESPONDING it_extract TO zbibverlage.
+    UPDATE zbibverlage.
+  ENDLOOP.
+  LOOP AT it_extract WHERE action = 'N'.
+    MOVE-CORRESPONDING it_extract TO zbibverlage.
+    INSERT zbibverlage.
+  ENDLOOP.
+ENDIF.
+
+CALL FUNCTION 'VIEW_ENQUEUE'
+  EXPORTING
+    action               = 'D'
+    enqueue_mode         = 'E'
+    view_name            = 'ZBIBVERLAGE'
+  EXCEPTIONS
+    client_reference     = 1
+    foreign_lock         = 2
+    invalid_action       = 3
+    invalid_enqueue_mode = 4
+    system_failure       = 5
+    table_not_found      = 6
+    OTHERS               = 7.

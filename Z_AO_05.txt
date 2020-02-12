@@ -1,0 +1,99 @@
+*&---------------------------------------------------------*
+*& Report  Z_AO_05                                         *
+*& ABAP Objects Demo                                       *
+*& einfache Klassen mit Ereignis                           *
+*&---------------------------------------------------------*
+
+REPORT  z_ao_05.
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto DEFINITION.
+  PUBLIC SECTION.
+
+    METHODS einzahlen
+      IMPORTING
+        betrag TYPE i.
+    EVENTS konto_voll
+      EXPORTING
+        value(kontostand) TYPE i.
+
+  PRIVATE SECTION.
+    DATA p_kontostand TYPE i.
+
+ENDCLASS.                    "lcl_konto DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto IMPLEMENTATION.
+
+  METHOD einzahlen.
+    p_kontostand = p_kontostand + betrag.
+    IF p_kontostand > 10000.
+      RAISE EVENT konto_voll
+        EXPORTING kontostand = p_kontostand.
+    ENDIF.
+  ENDMETHOD.                    "einzahlen
+
+ENDCLASS.                    "lcl_konto IMPLEMENTATION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_bank DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_bank DEFINITION.
+  PUBLIC SECTION.
+    METHODS constructor.
+    METHODS warnung
+      FOR EVENT konto_voll OF lcl_konto
+      IMPORTING kontostand.
+  PRIVATE SECTION.
+    DATA konto TYPE REF TO lcl_konto.
+ENDCLASS.                    "lcl_bank DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_bank IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_bank IMPLEMENTATION.
+  METHOD constructor.
+
+    CREATE OBJECT konto.
+
+    SET HANDLER me->warnung FOR konto.
+
+    CALL METHOD konto->einzahlen
+      EXPORTING
+        betrag = 1000.
+    CALL METHOD konto->einzahlen
+      EXPORTING
+        betrag = 7000.
+    CALL METHOD konto->einzahlen
+      EXPORTING
+        betrag = 3000.
+
+
+  ENDMETHOD.                    "constructor
+
+  METHOD warnung.
+    WRITE: / 'Konto voll. Betrag: ', kontostand.
+  ENDMETHOD.                    "warnung
+ENDCLASS.                    "lcl_bank IMPLEMENTATION
+
+
+
+
+
+START-OF-SELECTION.
+
+  DATA bank TYPE REF TO lcl_bank.
+
+  CREATE OBJECT bank.

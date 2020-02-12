@@ -1,0 +1,49 @@
+*&---------------------------------------------------------*
+*& Report  Z_AO_04                                         *
+*& ABAP Objects Demo                                       *
+*& einfache Klasse statischer Eigenschaft                  *
+*&---------------------------------------------------------*
+
+REPORT  z_ao_04.
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto DEFINITION.
+  PUBLIC SECTION.
+
+    CLASS-DATA  anzahlkonten TYPE i READ-ONLY.
+    METHODS constructor.
+
+ENDCLASS.                    "lcl_Konto DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto IMPLEMENTATION.
+
+  METHOD constructor.
+    anzahlkonten = anzahlkonten + 1.
+  ENDMETHOD.                    "einzahlen
+
+ENDCLASS.                    "lcl_konto IMPLEMENTATION
+
+
+
+DATA ref_konto1 TYPE REF TO lcl_konto.
+DATA ref_konto2 TYPE REF TO lcl_konto.
+
+
+START-OF-SELECTION.
+
+  CREATE OBJECT ref_konto1.
+
+  CREATE OBJECT ref_konto2.
+
+  WRITE: / 'Anzahl Konten: ', ref_konto1->anzahlkonten.
+  WRITE: / 'Anzahl Konten: ', ref_konto2->anzahlkonten.
+  WRITE: / 'Anzahl Konten: ', lcl_konto=>anzahlkonten.

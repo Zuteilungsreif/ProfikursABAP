@@ -1,0 +1,59 @@
+*&---------------------------------------------------------*
+*& Report  ZBIB_IM01                                       *
+*& Programm für den Hintergund-Import von Buch-Stammdaten  *
+*& Der logische Dateiname ZBIBEXPORTFILE muss gepflegt sein*
+*&---------------------------------------------------------*
+
+REPORT  zbib_im01.
+
+DATA: file_name(100),
+      file_format(3),
+      emergency_flag(1).
+
+DATA: osmsg(100).
+DATA: zeile(100).
+
+CALL FUNCTION 'FILE_GET_NAME'
+  EXPORTING
+    logical_filename              = 'ZBIBEXPORTFILE'
+    operating_system              = sy-opsys
+*   PARAMETER_1                   = ' '
+*   PARAMETER_2                   = ' '
+*   PARAMETER_3                   = ' '
+*   USE_PRESENTATION_SERVER       = ' '
+   with_file_extension           = 'X'
+*   USE_BUFFER                    = ' '
+ IMPORTING
+   emergency_flag                = emergency_flag
+   file_format                   = file_format
+   file_name                     = file_name
+ EXCEPTIONS
+   file_not_found                = 1
+   OTHERS                        = 2
+          .
+IF sy-subrc <> 0 OR emergency_flag NE space.
+  WRITE: 'Fehler beim Ermitteln des ',
+    'physischen Dateinamens'.
+  STOP.
+ELSE.
+
+  OPEN DATASET file_name
+    FOR INPUT MESSAGE osmsg IN TEXT MODE.
+
+  IF sy-subrc NE 0.
+    WRITE / osmsg.
+    STOP.
+  ELSE.
+
+
+    WHILE sy-subrc EQ 0.
+      READ DATASET file_name INTO zeile.
+      WRITE: / zeile+13(25), zeile+38(60).
+    ENDWHILE.
+
+    CLOSE DATASET file_name.
+
+
+  ENDIF.
+
+ENDIF.

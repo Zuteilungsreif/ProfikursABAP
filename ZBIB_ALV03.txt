@@ -1,0 +1,93 @@
+*&---------------------------------------------------------------------*
+*& Report  ZBIB_ALV03                                                  *
+*&---------------------------------------------------------------------*
+
+* Bitte beachten Sie, dass dieser Report ein Dynpro 100 benötigt,
+* wie im Buch beschrieben.
+* Falls Sie diesen Report per Copy & Paste übertragen haben,
+* müssen Sie Dynpro und GUI Status gemäß den Vorgaben
+* noch zusäzlich manuell anlegen
+
+REPORT  zbib_alv03.
+
+TABLES zbibverlage.
+
+DATA   ok_code LIKE sy-ucomm.
+DATA: cont1 TYPE REF TO cl_gui_custom_container,
+     alv1 TYPE REF TO cl_gui_alv_grid.
+
+DATA it_verlag TYPE STANDARD TABLE OF zbibverlage.
+
+START-OF-SELECTION.
+
+  SELECT * FROM zbibverlage INTO TABLE it_verlag.
+  CALL SCREEN 100.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'LEISTE'.
+  IF cont1 IS INITIAL.
+    CREATE OBJECT cont1
+      EXPORTING container_name = 'CONT1'.
+  ENDIF.
+  IF alv1 IS INITIAL.
+    CREATE OBJECT alv1
+      EXPORTING i_parent = cont1.
+
+    DATA it_fieldcat TYPE  lvc_t_fcat.
+    DATA wa_fieldcat LIKE LINE OF it_fieldcat.
+
+    CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+      EXPORTING
+        i_structure_name = 'ZBIBVERLAGE'
+      CHANGING
+        ct_fieldcat      = it_fieldcat.
+
+    CLEAR wa_fieldcat.
+    wa_fieldcat-do_sum = 'X'.
+    MODIFY it_fieldcat FROM wa_fieldcat
+      TRANSPORTING do_sum
+      WHERE fieldname = 'ANZAHL'.
+
+    CLEAR wa_fieldcat.
+    wa_fieldcat-no_out = 'X'.
+    MODIFY it_fieldcat FROM wa_fieldcat
+      TRANSPORTING no_out
+      WHERE fieldname = 'VERLAG'.
+
+    CLEAR wa_fieldcat.
+    wa_fieldcat-emphasize = 'C6'.
+    MODIFY it_fieldcat FROM wa_fieldcat
+      TRANSPORTING emphasize
+      WHERE fieldname = 'VERLAGBEZ'.
+
+
+    CALL METHOD alv1->set_table_for_first_display
+      CHANGING
+        it_outtab       = it_verlag
+        it_fieldcatalog = it_fieldcat.
+
+    CALL METHOD alv1->set_gridtitle
+      EXPORTING
+        i_gridtitle = 'Verlage'.
+
+  ENDIF.
+ENDMODULE.                 " STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      CALL METHOD alv1->free.
+      CALL METHOD cont1->free.
+      FREE cont1.
+      FREE alv1.
+      LEAVE PROGRAM.
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_0100  INPUT

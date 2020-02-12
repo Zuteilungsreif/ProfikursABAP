@@ -1,0 +1,54 @@
+*&---------------------------------------------------------------------*
+*& Report  ZBIB_OI2                                                 *
+*&---------------------------------------------------------------------*
+
+REPORT  zbib_oi02                 .
+
+INCLUDE ole2incl.
+
+DATA: wordobj TYPE ole2_object,
+      worddocs TYPE ole2_object,
+      worddoc TYPE ole2_object,
+      wordfont TYPE ole2_object,
+      wordsel TYPE ole2_object.
+
+CREATE OBJECT wordobj 'Word.Application'.
+PERFORM checkerror USING 'Objekt instanziieren'.
+
+CALL METHOD OF wordobj 'Documents' = worddocs.
+CALL METHOD OF worddocs 'Add' = worddoc.
+GET PROPERTY OF wordobj 'Selection' = wordsel.
+
+CALL METHOD OF wordsel 'TypeText'
+  EXPORTING
+    #1 = 'Hallo Welt!'.
+
+CALL METHOD OF wordsel 'TypeParagraph'.
+
+GET PROPERTY OF wordsel 'Font' = wordfont.
+
+SET PROPERTY OF wordfont 'Italic' = 1.
+SET PROPERTY OF wordfont 'Bold' = 1.
+
+CALL METHOD OF wordsel 'TypeText'
+  EXPORTING
+    #1 = 'wie geht es denn so??'.
+
+SET PROPERTY OF wordobj 'Visible' = 1.
+PERFORM checkerror USING 'WordObj.Visible'.
+
+FREE OBJECT wordobj.
+FREE OBJECT worddocs.
+FREE OBJECT worddoc.
+FREE OBJECT wordsel.
+FREE OBJECT wordfont.
+
+WRITE: / 'Objekt entladen'.
+
+************************************************************************
+FORM checkerror USING text.
+  IF sy-subrc <> 0.
+    WRITE: / 'Fehler bei: ',text, sy-subrc.
+    STOP.
+  ENDIF.
+ENDFORM.                               " ERR_HDL

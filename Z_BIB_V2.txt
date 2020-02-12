@@ -1,0 +1,31 @@
+FUNCTION z_bib_v2.
+*"----------------------------------------------------------------------
+*"*"Verbuchungsfunktionsbaustein:
+*"
+*"*"Lokale Schnittstelle:
+*"  IMPORTING
+*"     VALUE(I_BESTANDSNR) LIKE  ZBIBBESTAND-BESTANDSNR
+*"----------------------------------------------------------------------
+
+  DATA w_verlag LIKE zbibverlage-verlag.
+
+  TABLES zbibbuecher.
+  DATA w_isbn LIKE zbibbuecher-isbn.
+  DATA wa_verlag LIKE zbibverlage.
+
+
+  SELECT SINGLE isbn INTO w_isbn FROM
+  zbibbestand WHERE bestandsnr = i_bestandsnr.
+
+  SELECT SINGLE verlag INTO w_verlag
+  FROM zbibbuecher WHERE isbn = w_isbn.
+
+  SELECT SINGLE * INTO wa_verlag
+  FROM zbibverlage WHERE verlag = w_verlag.
+
+  wa_verlag-anzahl = wa_verlag-anzahl + 1.
+
+  UPDATE zbibverlage FROM wa_verlag.
+
+
+ENDFUNCTION.

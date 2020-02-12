@@ -1,0 +1,98 @@
+*&---------------------------------------------------------------------*
+*& Report  ZBIB_TX1                                                    *
+*&---------------------------------------------------------------------*
+
+REPORT  zbib_tx1 .
+
+
+TABLES zbibbuecher.
+
+PARAMETERS isbn LIKE zbibbuecher-isbn OBLIGATORY.
+
+DATA: lines TYPE STANDARD TABLE OF tline,
+      wa_header TYPE thead.
+
+MOVE isbn TO wa_header-tdname.
+
+CALL FUNCTION 'READ_TEXT'
+  EXPORTING
+*   CLIENT                        = SY-MANDT
+    id                            = 'ZUMS'
+    language                      = sy-langu
+    name                          = wa_header-tdname
+    object                        = 'ZBIBBUCH'
+*   ARCHIVE_HANDLE                = 0
+*   LOCAL_CAT                     = ' '
+ IMPORTING
+   header                        = wa_header
+  TABLES
+    lines                         = lines
+ EXCEPTIONS
+   id                            = 1
+   language                      = 2
+   name                          = 3
+   not_found                     = 4
+   object                        = 5
+   reference_check               = 6
+   wrong_access_to_archive       = 7
+   OTHERS                        = 8
+          .
+IF sy-subrc = 4.
+  CALL FUNCTION 'INIT_TEXT'
+    EXPORTING
+      id       = 'ZUMS'
+      language = sy-langu
+      name     = wa_header-tdname
+      object   = 'ZBIBBUCH'
+    IMPORTING
+      header   = wa_header
+    TABLES
+      lines    = lines
+    EXCEPTIONS
+      id       = 1
+      language = 2
+      name     = 3
+      object   = 4
+      OTHERS   = 5.
+
+  IF sy-subrc <> 0.
+    WRITE: / 'Fehler in INIT_TEXT!! sy-subrc=', sy-subrc.
+    STOP.
+  ENDIF.
+ELSEIF sy-subrc <> 0.
+  WRITE: / 'Fehler in READ_TEXT!! sy-subrc=', sy-subrc.
+  STOP.
+ENDIF.
+
+CALL FUNCTION 'EDIT_TEXT'
+  EXPORTING
+*   DISPLAY             = ' '
+*   EDITOR_TITLE        = ' '
+    header              = wa_header
+*   PAGE                = ' '
+*   WINDOW              = ' '
+*   SAVE                = 'X'
+*   LINE_EDITOR         = ' '
+*   CONTROL             = ' '
+*   PROGRAM             = ' '
+*   LOCAL_CAT           = ' '
+ IMPORTING
+*   FUNCTION            =
+   newheader           = wa_header
+*   RESULT              =
+  TABLES
+    lines               = lines
+ EXCEPTIONS
+   ID                  = 1
+   LANGUAGE            = 2
+   LINESIZE            = 3
+   NAME                = 4
+   OBJECT              = 5
+   TEXTFORMAT          = 6
+   COMMUNICATION       = 7
+   OTHERS              = 8
+          .
+IF sy-subrc <> 0.
+  WRITE: / 'Fehler in EDIT_TEXT!! sy-subrc=', sy-subrc.
+  STOP.
+ENDIF.

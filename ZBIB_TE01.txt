@@ -1,0 +1,168 @@
+*&-----------------------*
+*& Report  ZBIB_TE01     *
+*&-----------------------*
+
+* Bitte beachten Sie, dass dieser Report ein Dynpro 100 benötigt,
+* wie im Buch beschrieben.
+* Falls Sie diesen Report per Copy & Paste übertragen haben,
+* müssen Sie Dynpro und GUI Status gemäß den Vorgaben
+* noch zusäzlich manuell anlegen
+
+REPORT  zbib_te01.
+
+TABLES zbibbuecher.
+
+DATA: ok_code LIKE sy-ucomm,
+      isbn LIKE zbibbuecher-isbn.
+DATA: cont1 TYPE REF TO cl_gui_custom_container,
+      te TYPE REF TO cl_gui_textedit.
+DATA: lines TYPE STANDARD TABLE OF tline,
+     wa_header TYPE thead.
+
+START-OF-SELECTION.
+  CALL SCREEN 100.
+
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+
+  SET PF-STATUS 'LEISTE'.
+
+  IF cont1 IS INITIAL.
+    CREATE OBJECT cont1 EXPORTING container_name = 'CONT1'.
+  ENDIF.
+  IF te IS INITIAL.
+    CREATE OBJECT te
+      EXPORTING
+        parent = cont1
+        wordwrap_mode = te->wordwrap_at_fixed_position
+        wordwrap_position = 72.
+  ENDIF.
+
+ENDMODULE.                 " STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE ok_code.
+    WHEN 'LOAD'.
+      MOVE isbn TO wa_header-tdname.
+
+      CALL FUNCTION 'READ_TEXT'
+        EXPORTING
+*   CLIENT                        = SY-MANDT
+          id                            = 'ZUMS'
+          language                      = sy-langu
+          name                          = wa_header-tdname
+          object                        = 'ZBIBBUCH'
+*   ARCHIVE_HANDLE                = 0
+*   LOCAL_CAT                     = ' '
+       IMPORTING
+         header                        = wa_header
+        TABLES
+          lines                         = lines
+       EXCEPTIONS
+         id                            = 1
+         language                      = 2
+         name                          = 3
+         not_found                     = 4
+         object                        = 5
+         reference_check               = 6
+         wrong_access_to_archive       = 7
+         OTHERS                        = 8.
+
+      IF sy-subrc = 4.
+
+        CALL METHOD te->set_status_text
+          EXPORTING
+            status_text = 'Text wird neu angelegt'.
+
+        CALL FUNCTION 'INIT_TEXT'
+          EXPORTING
+            id       = 'ZUMS'
+            language = sy-langu
+            name     = wa_header-tdname
+            object   = 'ZBIBBUCH'
+          IMPORTING
+            header   = wa_header
+          TABLES
+            lines    = lines
+          EXCEPTIONS
+            id       = 1
+            language = 2
+            name     = 3
+            object   = 4
+            OTHERS   = 5.
+
+        IF sy-subrc <> 0.
+          MESSAGE e008(zbib).
+        ENDIF.
+      ELSEIF sy-subrc = 0.
+
+
+        CALL METHOD te->set_status_text
+          EXPORTING
+            status_text = 'Text bereits vorhanden'.
+
+      ELSEIF sy-subrc <> 0.
+        MESSAGE e008(zbib).
+      ENDIF.
+
+
+      CALL METHOD te->set_text_as_r3table
+        EXPORTING
+          table = lines.
+
+    WHEN 'SAVE'.
+
+      DATA im TYPE i.
+
+      CALL METHOD te->get_text_as_r3table
+        IMPORTING
+          table       = lines
+          is_modified = im.
+
+      CLASS cl_gui_cfw DEFINITION LOAD.
+
+      CALL METHOD cl_gui_cfw=>flush.
+
+      IF im = te->true.
+
+        CALL FUNCTION 'SAVE_TEXT'
+          EXPORTING
+*   CLIENT                = SY-MANDT
+            header                = wa_header
+*   INSERT                = ' '
+*   SAVEMODE_DIRECT       = ' '
+*   OWNER_SPECIFIED       = ' '
+*   LOCAL_CAT             = ' '
+         IMPORTING
+*   FUNCTION              =
+           newheader             = wa_header
+          TABLES
+            lines                 = lines
+* EXCEPTIONS
+*   ID                    = 1
+*   LANGUAGE              = 2
+*   NAME                  = 3
+*   OBJECT                = 4
+*   OTHERS                = 5
+                  .
+      ENDIF.
+
+    WHEN 'EXIT'.
+      CALL METHOD cont1->free.
+      FREE cont1.
+      FREE te.
+      LEAVE PROGRAM.
+  ENDCASE.
+
+  CLEAR ok_code.
+
+ENDMODULE.                 " USER_COMMAND_0100  INPUT

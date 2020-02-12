@@ -1,0 +1,166 @@
+*&---------------------------------------------------------------------*
+*& Report  ZBIB_EX04                                                   *
+*& PDF-Export                                                          *
+*&---------------------------------------------------------------------*
+
+REPORT  zbib_ex04 LINE-SIZE 77.
+
+TABLES: zbibkunden, zbibbuecher.
+
+SKIP 1.
+WRITE / 'Gesamtübersicht Kunden'.
+SKIP 1.
+
+WRITE sy-uline.
+
+FORMAT COLOR COL_HEADING.
+WRITE: / '|',text-001,'|',text-002.
+WRITE: '|',text-003,'|'.
+FORMAT COLOR COL_HEADING OFF.
+
+WRITE sy-uline.
+
+SELECT * FROM zbibkunden.
+
+  WRITE: / '|',zbibkunden-kundennr,'|',zbibkunden-name.
+  WRITE: '|',zbibkunden-plz, zbibkunden-ort+0(25),'|'.
+
+ENDSELECT.
+
+WRITE sy-uline.
+
+WRITE: /2 text-004, sy-dbcnt.
+
+SKIP 2.
+WRITE / 'Gesamtübersicht Bücher'.
+SKIP 1.
+
+WRITE sy-uline.
+
+FORMAT COLOR COL_HEADING.
+WRITE: / '|',text-005,'|',text-006, '|'.
+FORMAT COLOR COL_HEADING OFF.
+
+WRITE sy-uline.
+
+SELECT * FROM zbibbuecher.
+
+  WRITE: / '|',zbibbuecher-isbn,'|',zbibbuecher-titel+0(60),'|'.
+ENDSELECT.
+
+WRITE sy-uline.
+
+WRITE: /2 text-004, sy-dbcnt.
+
+
+
+
+SET PF-STATUS 'LISTE'.
+
+AT USER-COMMAND.
+
+
+  IF sy-ucomm = 'PDFEX'.
+
+    TABLES tsp01.
+    DATA: spoolid LIKE tsp01-rqident.
+    DATA it_list LIKE abaplist OCCURS 0.
+
+    CALL FUNCTION 'SAVE_LIST'
+      TABLES
+        listobject         = it_list
+      EXCEPTIONS
+        list_index_invalid = 1
+        OTHERS             = 2.
+    IF sy-subrc <> 0.
+      WRITE / 'Fehler in SAVE_LIST'. STOP.
+    ENDIF.
+
+    NEW-PAGE PRINT ON
+         IMMEDIATELY ' '
+         COVER TEXT 'pdf-Konvertierung'
+         KEEP IN SPOOL 'X'
+         SAP COVER PAGE ' '
+         LIST NAME 'PDFTEMP'
+         DESTINATION 'LOCL'
+         NO DIALOG.
+
+    CALL FUNCTION 'WRITE_LIST'
+      TABLES
+        listobject = it_list.
+    IF sy-subrc <> 0.
+      WRITE / 'Fehler in WRITE_LIST'. STOP.
+    ENDIF.
+
+    NEW-PAGE PRINT OFF.
+
+    SELECT * FROM tsp01 WHERE rqowner = sy-uname
+        AND rq2name = 'PDFTEMP'
+        ORDER BY rqcretime DEsCENDING.
+      spoolid = tsp01-rqident.
+      EXIT.
+    ENDSELECT.
+
+
+    DATA: len TYPE i.
+    DATA: pdfbuffer  LIKE tline OCCURS 0.
+
+    CALL FUNCTION 'CONVERT_ABAPSPOOLJOB_2_PDF'
+      EXPORTING
+        src_spoolid                    = spoolid
+*   NO_DIALOG                      =
+*   DST_DEVICE                     =
+*   PDF_DESTINATION                =
+     IMPORTING
+       pdf_bytecount                  = len
+*   PDF_SPOOLID                    =
+*   LIST_PAGECOUNT                 =
+*   BTC_JOBNAME                    =
+*   BTC_JOBCOUNT                   =
+     TABLES
+       pdf                            = pdfbuffer
+ EXCEPTIONS
+   err_no_abap_spooljob           = 1
+   err_no_spooljob                = 2
+   err_no_permission              = 3
+   err_conv_not_possible          = 4
+   err_bad_destdevice             = 5
+   user_cancelled                 = 6
+   err_spoolerror                 = 7
+   err_temseerror                 = 8
+   err_btcjob_open_failed         = 9
+   err_btcjob_submit_failed       = 10
+   err_btcjob_close_failed        = 11
+   OTHERS                         = 12
+              .
+    IF sy-subrc NE 0.
+      WRITE / 'Fehler in CONVERT_ABAPSPOOLJOB_2_PD'.
+      STOP.
+    ENDIF.
+
+* Rel 4.6
+*    DATA pfile LIKE rlgrap-filename.
+
+* Rel. 4.7
+    DATA pfile TYPE string.
+
+    pfile = 'c:\Uebersicht.pdf'.
+
+    CALL FUNCTION 'GUI_DOWNLOAD'
+      EXPORTING
+        bin_filesize            = len
+        filename                = pfile
+        filetype                = 'BIN'
+      TABLES
+        data_tab                = pdfbuffer
+      EXCEPTIONS
+        file_write_error        = 1
+        no_batch                = 2
+        gui_refuse_filetransfer = 3
+        invalid_type            = 4.
+
+    IF sy-subrc NE 0.
+      WRITE: / 'Fehler ', sy-subrc.
+    ENDIF.
+
+  ENDIF.

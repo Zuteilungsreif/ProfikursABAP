@@ -1,0 +1,43 @@
+*&--------------------------------------------------*
+*& Report  ZBIB_VERB_S                              *
+*& Bücherausleihe mit Sperrung                      *
+*& Verbuchung durchführen                           *
+*&--------------------------------------------------*
+
+REPORT  zbib_verb_s.
+
+PARAMETER p_best LIKE zbibbestand-bestandsnr OBLIGATORY.
+PARAMETER p_kunde LIKE zbibkunden-kundennr.
+
+
+CALL FUNCTION 'ENQUEUE_EZBIBBESTAND'
+ EXPORTING
+*   MODE_ZBIBBESTAND       = 'E'
+*   MANDT                  = SY-MANDT
+   BESTANDSNR             = P_best
+   _SCOPE                 = '3'
+*   _WAIT                  = ' '
+*   _COLLECT               = ' '
+ EXCEPTIONS
+   FOREIGN_LOCK           = 1
+   SYSTEM_FAILURE         = 2
+   OTHERS                 = 3
+          .
+IF sy-subrc <> 0.
+ MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+
+
+CALL FUNCTION 'Z_BIB_V1' IN UPDATE TASK
+  EXPORTING
+    i_bestandsnr = p_best
+    i_kundennr   = p_kunde.
+
+CALL FUNCTION 'Z_BIB_V2' IN UPDATE TASK
+  EXPORTING
+    i_bestandsnr = p_best.
+
+COMMIT WORK.
+
+WRITE / 'Bestandsänderung wird verbucht'.

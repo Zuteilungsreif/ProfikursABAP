@@ -1,0 +1,101 @@
+*&--------------------------------------------------*
+*& Report  ZBIB_EX03                                *
+*& Download eines Datenbestandes in eine HTML-Datei *
+*&--------------------------------------------------*
+
+REPORT  zbib_ex02 NO STANDARD PAGE HEADING LINE-SIZE 117.
+
+TABLES: zbibkunden.
+
+WRITE sy-uline.
+
+* format intensified off.
+FORMAT COLOR COL_HEADING.
+WRITE: / '|',text-001,'|',text-002.
+WRITE: '|',text-003,'|',text-004.
+WRITE: '|',text-005,'|'.
+FORMAT COLOR COL_HEADING OFF.
+
+WRITE sy-uline.
+
+SELECT * FROM zbibkunden.
+
+  WRITE: / '|',zbibkunden-kundennr,'|',zbibkunden-name.
+  WRITE: '|',zbibkunden-strasse,'|',zbibkunden-plz.
+  WRITE: '|',zbibkunden-ort,'|'.
+
+ENDSELECT.
+
+WRITE sy-uline.
+
+WRITE: /2 text-006, sy-dbcnt.
+
+SET PF-STATUS 'LISTE'.
+
+AT USER-COMMAND.
+
+
+  IF sy-ucomm = 'HTMLEX'.
+
+    DATA it_list LIKE abaplist OCCURS 0 WITH HEADER LINE.
+    DATA it_html LIKE w3html OCCURS 0 WITH HEADER LINE.
+
+    CALL FUNCTION 'SAVE_LIST'
+      EXPORTING
+        list_index         = 0
+      TABLES
+        listobject         = it_list
+      EXCEPTIONS
+        list_index_invalid = 1
+        OTHERS             = 2.
+
+    IF sy-subrc <> 0.
+      WRITE / 'Fehler beim Aufruf von SAVE_LIST'.
+      STOP.
+    ENDIF.
+
+    CALL FUNCTION 'WWW_HTML_FROM_LISTOBJECT'
+ EXPORTING
+   report_name         = 'Kundenexport'
+   template_name       = 'ZBIB_KUNDENEXPORT' "'WEBREPORTING_REPORT'
+      TABLES
+        html                = it_html
+        listobject          = it_list
+*   LISTICONS           =
+.
+
+* Rel. < 4.7
+*    data pfile like rlgrap-filename.
+
+* Rel. 4.7
+    DATA pfile TYPE string.
+
+
+    pfile = 'c:\Kunden.html'.
+
+    CALL FUNCTION 'GUI_DOWNLOAD'
+      EXPORTING
+        filename                = pfile
+        filetype                = 'BIN'
+      TABLES
+        data_tab                = it_html
+      EXCEPTIONS
+        file_write_error        = 1
+        no_batch                = 2
+        gui_refuse_filetransfer = 3
+        invalid_type            = 4.
+
+* Rel. < 4.7
+*    data cmd like rlgrap-filename.
+
+* Rel. 4.7
+    DATA cmd(100).
+
+    cmd = pfile.
+
+
+    CALL FUNCTION 'GUI_RUN'
+      EXPORTING
+        command = cmd.
+
+  ENDIF.

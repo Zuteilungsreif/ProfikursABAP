@@ -1,0 +1,64 @@
+*&---------------------------------------------------------------------*
+*& Report  ZBIB_SM2                                                    *
+*&---------------------------------------------------------------------*
+
+REPORT  zbib_sm2.
+
+PARAMETERS form TYPE tdsfname DEFAULT 'ZBIB_FORM3'.
+
+DATA: fuba TYPE rs38l_fnam.
+
+CALL FUNCTION 'SSF_FUNCTION_MODULE_NAME'
+  EXPORTING
+    formname           = form
+  IMPORTING
+    fm_name            = fuba
+  EXCEPTIONS
+    no_form            = 1
+    no_function_module = 2
+    OTHERS             = 3.
+IF sy-subrc <> 0.
+  WRITE: / 'Fehler beim Ermitteln ',
+        'des Funktionsbausteins'.
+  STOP.
+ENDIF.
+
+
+DATA outcontrol TYPE ssfctrlop.
+DATA outoptions TYPE ssfcompop.
+data outinfo type SSFCRESPD.
+
+
+outcontrol-no_dialog = 'X'.
+outoptions-tddest = 'LOCL'.
+outoptions-tdimmed = 'X'.
+outoptions-tddelete = ' '.
+
+
+CALL FUNCTION fuba
+  EXPORTING
+*   ARCHIVE_INDEX              =
+*   ARCHIVE_INDEX_TAB          =
+*   ARCHIVE_PARAMETERS         =
+    control_parameters         = outcontrol
+*   MAIL_APPL_OBJ              =
+*   mail_recipient             =
+*   MAIL_SENDER                =
+   output_options             = outoptions
+   user_settings              = ' '
+ IMPORTING
+   DOCUMENT_OUTPUT_INFO       = outinfo
+*   JOB_OUTPUT_INFO            =
+*   JOB_OUTPUT_OPTIONS         =
+ EXCEPTIONS
+   formatting_error           = 1
+   internal_error             = 2
+   send_error                 = 3
+   user_canceled              = 4
+   OTHERS                     = 5
+          .
+IF sy-subrc <> 0.
+  MESSAGE e008(zbib). " Fehler im Smart-Forms-Baustein
+ELSE.
+  WRITE: / outinfo-TDFPAGES , 'Seite(n) gedruckt'.
+ENDIF.

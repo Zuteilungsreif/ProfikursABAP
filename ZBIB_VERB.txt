@@ -1,0 +1,25 @@
+*&--------------------------------------------------*
+*& Report  ZBIB_VERB                                *
+*& Bücherausleihe mit Verbuchung durchführen        *
+*&--------------------------------------------------*
+
+REPORT  zbib_verb.
+
+PARAMETER p_best LIKE zbibbestand-bestandsnr OBLIGATORY.
+PARAMETER p_kunde LIKE zbibkunden-kundennr.
+
+wait up to 10 seconds.
+
+CALL FUNCTION 'Z_BIB_V1' IN UPDATE TASK
+  EXPORTING
+    i_bestandsnr = p_best
+    i_kundennr   = p_kunde.
+
+CALL FUNCTION 'Z_BIB_V2' IN UPDATE TASK
+  EXPORTING
+    i_bestandsnr = p_best.
+
+COMMIT WORK.
+
+WRITE / 'Bestandsänderung wird verbucht'.
+.

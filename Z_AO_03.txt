@@ -1,0 +1,62 @@
+*&---------------------------------------------------------*
+*& Report  Z_AO_03                                         *
+*& ABAP Objects Demo                                       *
+*& einfache Klasse mit Konstuktor                          *
+*&---------------------------------------------------------*
+
+REPORT  z_ao_03.
+
+TYPES t_besitzer(20) TYPE c.
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto DEFINITION.
+  PUBLIC SECTION.
+
+    METHODS constructor
+      IMPORTING
+        besitzer TYPE t_besitzer.
+
+    METHODS holebesitzer
+     RETURNING value(besitzer) TYPE t_besitzer.
+
+  PRIVATE SECTION.
+    DATA p_besitzer TYPE t_besitzer.
+
+ENDCLASS.                    "lcl_Konto DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto IMPLEMENTATION.
+
+  METHOD constructor.
+    p_besitzer = besitzer.
+  ENDMETHOD.                    "einzahlen
+
+  METHOD holebesitzer.
+    besitzer = p_besitzer.
+  ENDMETHOD.                    "HoleBesitzer
+
+ENDCLASS.                    "lcl_konto IMPLEMENTATION
+
+
+
+
+
+START-OF-SELECTION.
+
+  DATA ref_konto TYPE REF TO lcl_konto.
+  DATA b TYPE t_besitzer.
+
+  CREATE OBJECT ref_konto
+    EXPORTING besitzer = 'A. Jung'.
+
+
+  b = ref_konto->holebesitzer( ).
+  WRITE: 'Besitzer: ', b.

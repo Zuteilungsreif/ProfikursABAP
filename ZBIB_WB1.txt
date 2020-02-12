@@ -1,0 +1,83 @@
+*&-----------------------*
+*& Report  ZBIB_WB1      *
+*& Mini-Web-Browser      *
+*&-----------------------*
+
+* Bitte beachten Sie, dass dieser Report ein Dynpro 100 benötigt,
+* wie im Buch beschrieben.
+* Falls Sie diesen Report per Copy & Paste übertragen haben,
+* müssen Sie Dynpro und GUI Status gemäß den Vorgaben
+* noch zusäzlich manuell anlegen
+
+REPORT  zbib_wb1                                                     .
+
+DATA: ok_code LIKE sy-ucomm,
+      url(100) TYPE c.
+DATA: cont1 TYPE REF TO cl_gui_custom_container,
+      wb TYPE REF TO cl_gui_html_viewer.
+
+
+START-OF-SELECTION.
+  CALL SCREEN 100.
+
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+
+  SET PF-STATUS 'LEISTE'.
+
+  IF cont1 IS INITIAL.
+    CREATE OBJECT cont1 EXPORTING container_name = 'CONT1'.
+  ENDIF.
+  IF wb IS INITIAL.
+    CREATE OBJECT wb EXPORTING parent = cont1.
+  ENDIF.
+
+ENDMODULE.                 " STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+
+      DATA temp_url(100) TYPE c.
+
+      CALL METHOD wb->go_back.
+      CALL METHOD wb->get_current_url
+        IMPORTING
+          url = temp_url.
+
+      CALL METHOD cl_gui_cfw=>flush.
+
+
+    WHEN 'FORWARD'.
+      CALL METHOD wb->go_forward.
+    WHEN 'EXIT'.
+      CALL METHOD cont1->free.
+      FREE cont1.
+      FREE wb.
+      LEAVE PROGRAM.
+  ENDCASE.
+
+  CLEAR ok_code.
+
+ENDMODULE.                 " USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  user_browse  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_browse INPUT.
+
+  CALL METHOD wb->show_url
+    EXPORTING
+      url = url.
+
+ENDMODULE.                 " user_browse  INPUT

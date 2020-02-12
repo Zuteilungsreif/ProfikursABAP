@@ -1,0 +1,58 @@
+*&---------------------------------------------------------*
+*& Report  ZBIB_EX01                                       *
+*& Programm für den Hintergund-Export von Buch-Stammdaten  *
+*& Der logische Dateiname ZBIBEXPORTFILE muss gepflegt sein*
+*&---------------------------------------------------------*
+
+report  zbib_ex01.
+
+tables zbibbuecher.
+
+data: file_name(100),
+      file_format(3),
+      emergency_flag(1).
+
+data: osmsg(100).
+
+call function 'FILE_GET_NAME'
+  exporting
+    logical_filename              = 'ZBIBEXPORTFILE'
+    operating_system              = sy-opsys
+*   PARAMETER_1                   = ' '
+*   PARAMETER_2                   = ' '
+*   PARAMETER_3                   = ' '
+*   USE_PRESENTATION_SERVER       = ' '
+   with_file_extension           = 'X'
+*   USE_BUFFER                    = ' '
+ importing
+   emergency_flag                = emergency_flag
+   file_format                   = file_format
+   file_name                     = file_name
+ exceptions
+   file_not_found                = 1
+   others                        = 2
+          .
+if sy-subrc <> 0 or emergency_flag ne space.
+  write: 'Fehler beim Ermitteln des ',
+    'physischen Dateinamens'.
+else.
+  write: / 'Datei: ',file_name.
+
+  open dataset file_name
+    for output message osmsg in text mode.
+
+  if sy-subrc ne 0.
+    write / osmsg.
+  else.
+
+    select * from zbibbuecher.
+      transfer zbibbuecher to file_name.
+    endselect.
+
+    close dataset file_name.
+
+    write: / sy-dbcnt, ' Datensätze entladen'.
+
+  endif.
+
+endif.

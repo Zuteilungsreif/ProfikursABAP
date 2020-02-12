@@ -1,0 +1,52 @@
+*&---------------------------------------------------------*
+*& Report  Z_AO_07                                         *
+*& ABAP Objects Demo                                       *
+*& einfaches Interface                                     *
+*&---------------------------------------------------------*
+
+REPORT  z_ao_07.
+
+Interface konto.
+
+  data Besitzer(20) type c.
+
+  methods einzahlen
+    importing
+      betrag type i.
+
+endinterface.
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto DEFINITION.
+  PUBLIC SECTION.
+
+    interfaces konto.
+
+  PRIVATE SECTION.
+    DATA p_kontostand TYPE i.
+
+ENDCLASS.                    "lcl_konto DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto IMPLEMENTATION.
+
+  METHOD konto~einzahlen.
+    p_kontostand = p_kontostand + betrag.
+  ENDMETHOD.                    "einzahlen
+
+ENDCLASS.                    "lcl_konto IMPLEMENTATION
+
+
+
+
+
+
+START-OF-SELECTION.

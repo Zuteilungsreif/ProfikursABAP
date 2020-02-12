@@ -1,0 +1,116 @@
+*&-----------------------------------*
+*& Report  ZBIB_WB2                  *
+*& Mini-Web-Browser mit Ereignis     *
+*&-----------------------------------*
+
+* Bitte beachten Sie, dass dieser Report ein Dynpro 100 benötigt,
+* wie im Buch beschrieben.
+* Falls Sie diesen Report per Copy & Paste übertragen haben,
+* müssen Sie Dynpro und GUI Status gemäß den Vorgaben
+* noch zusäzlich manuell anlegen
+
+REPORT  zbib_wb2                                                     .
+
+DATA: ok_code LIKE sy-ucomm,
+      url(100) TYPE c.
+DATA: cont1 TYPE REF TO cl_gui_custom_container,
+      wb TYPE REF TO cl_gui_html_viewer.
+
+DATA:   it_events TYPE cntl_simple_events,
+        wa_event  TYPE cntl_simple_event.
+
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_event DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_event DEFINITION.
+  PUBLIC SECTION.
+    CLASS-METHODS html_viewer_event FOR EVENT navigate_complete
+    OF cl_gui_html_viewer
+    IMPORTING url.
+
+ENDCLASS.                    "lcl_event DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_event  IMPLMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_event IMPLEMENTATION.
+
+  METHOD html_viewer_event.
+    MESSAGE s006(zbib). " Message: Seite da!!!
+  ENDMETHOD.                    "html_viewer_event
+
+ENDCLASS.                    "lcl_event  IMPLMENTATION
+
+
+START-OF-SELECTION.
+  CALL SCREEN 100.
+
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+
+  SET PF-STATUS 'LEISTE'.
+
+  IF cont1 IS INITIAL.
+    CREATE OBJECT cont1 EXPORTING container_name = 'CONT1'.
+  ENDIF.
+  IF wb IS INITIAL.
+    CREATE OBJECT wb EXPORTING parent = cont1.
+
+    SET HANDLER lcl_event=>html_viewer_event FOR wb.
+
+    CLEAR wa_event.
+    REFRESH it_events.
+    wa_event-eventid = wb->m_id_navigate_complete.
+    APPEND wa_event TO it_events.
+    CALL METHOD wb->set_registered_events
+      EXPORTING
+        events = it_events.
+
+
+
+  ENDIF.
+
+ENDMODULE.                 " STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      CALL METHOD wb->go_back.
+    WHEN 'FORWARD'.
+      CALL METHOD wb->go_forward.
+    WHEN 'EXIT'.
+      CALL METHOD cont1->free.
+      FREE cont1.
+      FREE wb.
+      LEAVE PROGRAM.
+  ENDCASE.
+
+  CLEAR ok_code.
+
+ENDMODULE.                 " USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  user_browse  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_browse INPUT.
+
+  CALL METHOD wb->show_url
+    EXPORTING
+      url = url.
+
+ENDMODULE.                 " user_browse  INPUT

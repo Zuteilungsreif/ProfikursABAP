@@ -1,0 +1,129 @@
+*&---------------------------------------------------------*
+*& Report  ZBIB_FTPPUT                                     *
+*& FTP-Übertragung der Buch-Stammdaten                     *
+*&---------------------------------------------------------*
+
+REPORT  zbib_ftpput                   .
+
+PARAMETERS ftpuser(100) LOWER CASE.
+PARAMETERS ftppw(100) LOWER CASE.
+PARAMETERS ftphost(100) .
+PARAMETERS ftpdpath(100) DEFAULT '/www/testverzeichnis/' LOWER CASE.
+PARAMETERS ftpdfile(100) DEFAULT 'BibExport.txt' LOWER CASE.
+
+DATA ftpsrc(100).
+
+DATA: ftphandle TYPE i, pwlength TYPE i.
+
+DATA: BEGIN OF it_ftpdata OCCURS 0.
+DATA: ftpline(100).
+DATA: END OF it_ftpdata.
+
+DATA: ftpcommand(200).
+
+
+
+DESCRIBE FIELD ftppw LENGTH pwlength.
+
+*-- FTP_CONNECT requires an encrypted password to work
+CALL 'AB_RFC_X_SCRAMBLE_STRING'
+     ID 'SOURCE' FIELD ftppw ID 'KEY' FIELD 26101957
+     ID 'SCR' FIELD 'X' ID 'DESTINATION' FIELD ftppw
+     ID 'DSTLEN' FIELD pwlength.
+
+
+CALL FUNCTION 'FTP_CONNECT'
+  EXPORTING
+    user                   = ftpuser
+    password               = ftppw
+*              ACCOUNT                =
+    host                   = ftphost
+    rfc_destination        = 'SAPFTPA'
+*              GATEWAY_USER           =
+*              GATEWAY_PASSWORD       =
+*              GATEWAY_HOST           =
+ IMPORTING
+   handle                 = ftphandle
+ EXCEPTIONS
+   not_connected          = 1
+   OTHERS                 = 2.
+
+
+
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE 'E' NUMBER sy-msgno
+    WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ELSE.
+  WRITE / 'Connect zum FTP-Server erfolgreich ...'
+    COLOR COL_HEADING.
+ENDIF.
+
+CALL FUNCTION 'FILE_GET_NAME'
+     EXPORTING
+          logical_filename    = 'ZBIBEXPORTFILE'
+          operating_system    = sy-opsys
+          with_file_extension = 'X'
+     IMPORTING
+          file_name           = ftpsrc.
+
+CONCATENATE ftpdpath ftpdfile
+  INTO ftpdfile.
+CONCATENATE 'put' ftpsrc ftpdfile
+  INTO ftpcommand SEPARATED BY ' '.
+
+WRITE / 'Versuche Datei zu senden ....'
+    COLOR COL_HEADING.
+
+CALL FUNCTION 'FTP_COMMAND'
+     EXPORTING
+          handle        = ftphandle
+          command       = ftpcommand
+     TABLES
+          data          = it_ftpdata
+     EXCEPTIONS
+          tcpip_error   = 1
+          command_error = 2
+          data_error    = 3
+          OTHERS        = 4.
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE 'E' NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ELSE.
+  LOOP AT it_ftpdata.
+    WRITE / it_ftpdata-ftpline.
+  ENDLOOP.
+  REFRESH it_ftpdata.
+ENDIF.
+
+WRITE / 'Zielverzeichnis abrufen ...'
+  COLOR COL_HEADING.
+
+CONCATENATE 'dir' ftpdpath
+  INTO ftpcommand SEPARATED BY ' '.
+
+CALL FUNCTION 'FTP_COMMAND'
+     EXPORTING
+          handle        = ftphandle
+          command       = ftpcommand
+     TABLES
+          data          = it_ftpdata
+     EXCEPTIONS
+          tcpip_error   = 1
+          command_error = 2
+          data_error    = 3
+          OTHERS        = 4.
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE 'E' NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ELSE.
+  LOOP AT it_ftpdata.
+    WRITE  / it_ftpdata-ftpline.
+  ENDLOOP.
+ENDIF.
+
+
+
+CALL FUNCTION 'FTP_DISCONNECT'
+     EXPORTING
+          handle = ftphandle.
+.

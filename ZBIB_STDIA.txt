@@ -1,0 +1,197 @@
+*&---------------------------------------------------------------------*
+*& Report  ZBIB_STDIA                                                  *
+*& (c) www.patrick-theobald.de                                         *
+*&---------------------------------------------------------------------*
+
+REPORT  ZBIB_STDIA   no standard page heading                 .
+
+
+DATA ART TYPE I.
+DATA I_ANSWER(3) TYPE C.
+DATA IT_FIELDS LIKE SVAL OCCURS 0 WITH HEADER LINE.
+
+WRITE / 'Doppelklick, um einen Dialog-Baustein zu testen'.
+skip 1.
+
+WRITE / 'POPUP_TO_CONFIRM_STEP'. ART = 1. HIDE ART.
+WRITE / 'POPUP_TO_CONFIRM_WITH_MESSAGE'. ART = 2. HIDE ART.
+WRITE / 'POPUP_TO_CONFIRM_WITH_VALUE'. ART = 3. HIDE ART.
+WRITE / 'POPUP_TO_CONFIRM_LOSS_OF_DATA'. ART = 4. HIDE ART.
+WRITE / 'POPUP_TO_CONFIRM_DATA_LOSS'. ART = 5. HIDE ART.
+SKIP 1.
+WRITE / 'POPUP_TO_DECIDE'. ART = 10. HIDE ART.
+WRITE / 'POPUP_TO_DECIDE_WITH_MESSAGE'. ART = 11. HIDE ART.
+SKIP 1.
+WRITE / 'POPUP_DISPLAY_TEXT'. ART = 20. HIDE ART.
+SKIP 1.
+WRITE / 'POPUP_GET_VALUES'.ART = 30. HIDE ART.
+WRITE / 'POPUP_GET_VALUES_DB_CHECKED'.ART = 31. HIDE ART.
+
+AT LINE-SELECTION.
+
+  CASE ART.
+    WHEN 1.
+      CALL FUNCTION 'POPUP_TO_CONFIRM_STEP'
+           EXPORTING
+*         DEFAULTOPTION  = 'Y'
+               TEXTLINE1      = 'Hallo Anwender,'
+               TEXTLINE2      = 'wollen Sie das wirklich so haben??'
+               TITEL          = 'wirklich so machen??'
+*         CANCEL_DISPLAY = 'X'
+          IMPORTING
+               ANSWER         = I_ANSWER
+           EXCEPTIONS
+                OTHERS         = 1.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+    WHEN 2.
+      CALL FUNCTION 'POPUP_TO_CONFIRM_WITH_MESSAGE'
+           EXPORTING
+*         DEFAULTOPTION  = 'Y'
+               DIAGNOSETEXT1  = 'Ihre Angaben entsprechen'
+               DIAGNOSETEXT2  = 'nicht den hinterlegten Stammdaten.'
+               TEXTLINE1      = 'Sollen die Eingaben jetzt mit'
+               TEXTLINE2      = 'den Stammdaten abgegeglichen werden?'
+               TITEL          = 'ungünstige Angaben'
+*         CANCEL_DISPLAY = 'X'
+          IMPORTING
+               ANSWER         = I_ANSWER
+           EXCEPTIONS
+                OTHERS         = 1.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+    WHEN 3.
+      CALL FUNCTION 'POPUP_TO_CONFIRM_WITH_VALUE'
+           EXPORTING
+*         DEFAULTOPTION  = 'Y'
+                OBJECTVALUE    = '005710 20'
+               TEXT_AFTER     = 'mit einem Kennzeichen versehen?'
+                TEXT_BEFORE    = 'Wollen Sie wirklich'
+                TITEL          = 'Kennzeichen setzen?'
+*         CANCEL_DISPLAY = 'X'
+          IMPORTING
+               ANSWER         = I_ANSWER
+           EXCEPTIONS
+                TEXT_TOO_LONG  = 1
+                OTHERS         = 2.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+    WHEN 4.
+      CALL FUNCTION 'POPUP_TO_CONFIRM_LOSS_OF_DATA'
+           EXPORTING
+          TEXTLINE1    = 'Wollen Sie die Änderungen wirklich verwefen?'
+                TITEL        = 'Änderungen verwerfen?'
+          IMPORTING
+               ANSWER       = I_ANSWER
+           EXCEPTIONS
+                OTHERS       = 1.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+    WHEN 5.
+      CALL FUNCTION 'POPUP_TO_CONFIRM_DATA_LOSS'
+           EXPORTING
+*         DEFAULTOPTION = 'J'
+                TITEL         = 'Programm-Ausstieg ....'
+*         START_COLUMN  = 25
+*         START_ROW     = 6
+          IMPORTING
+               ANSWER        = I_ANSWER
+           EXCEPTIONS
+                OTHERS        = 1.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+
+    WHEN 10.
+      CALL FUNCTION 'POPUP_TO_DECIDE'
+           EXPORTING
+*         DEFAULTOPTION  = '1'
+                TEXTLINE1      = 'Bitte enscheiden Sie sich jetzt ...'
+                TEXT_OPTION1   = 'für das hier ...'
+                TEXT_OPTION2   = 'oder für das andere ...'
+                TITEL          = 'Entscheidung'
+*         CANCEL_DISPLAY = 'X'
+          IMPORTING
+               ANSWER         = I_ANSWER
+           EXCEPTIONS
+                OTHERS         = 1.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+    WHEN 11.
+      CALL FUNCTION 'POPUP_TO_DECIDE_WITH_MESSAGE'
+           EXPORTING
+*         DEFAULTOPTION  = '1'
+                DIAGNOSETEXT1  = 'dreizeiliger,'
+         DIAGNOSETEXT2  = 'wunderbarer Diagnostext'
+         DIAGNOSETEXT3  = 'in Prosa'
+                TEXTLINE1      = 'Hier steht'
+         TEXTLINE2      = 'der dreizeilige'
+         TEXTLINE3      = 'Fragtetext'
+                TEXT_OPTION1   = '1. Alternative'
+                TEXT_OPTION2   = '2. Alternative'
+                TITEL          = '2 Alternativen ...'
+*         CANCEL_DISPLAY = 'X'
+          IMPORTING
+               ANSWER         = I_ANSWER
+           EXCEPTIONS
+                OTHERS         = 1.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+    WHEN 20.
+      CALL FUNCTION 'POPUP_DISPLAY_TEXT'
+           EXPORTING
+*         LANGUAGE       = SY-LANGU
+                POPUP_TITLE    = 'Pelzmäntel ...'
+*         START_COLUMN   = 10
+*         START_ROW      = 3
+                TEXT_OBJECT    = 'ZBIB_TB01'
+                HELP_MODAL     = ' '
+          IMPORTING
+               CANCELLED      = I_ANSWER
+           EXCEPTIONS
+                TEXT_NOT_FOUND = 1
+                OTHERS         = 2.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+    WHEN 30.
+      REFRESH IT_FIELDS.
+      IT_FIELDS-TABNAME = 'T000'.
+      IT_FIELDS-FIELDNAME = 'MANDT'.
+      IT_FIELDS-VALUE = SY-MANDT.
+      APPEND IT_FIELDS.
+      IT_FIELDS-TABNAME = 'USR03'.
+      IT_FIELDS-FIELDNAME = 'BNAME'.
+      IT_FIELDS-VALUE = SY-UNAME.
+      IT_FIELDS-FIELD_ATTR = '02'.
+      APPEND IT_FIELDS.
+      CALL FUNCTION 'POPUP_GET_VALUES'
+           EXPORTING
+*         NO_VALUE_CHECK  = ' '
+                POPUP_TITLE     = 'Titel'
+          IMPORTING
+               RETURNCODE      = I_ANSWER
+           TABLES
+                FIELDS          = IT_FIELDS
+           EXCEPTIONS
+                ERROR_IN_FIELDS = 1
+                OTHERS          = 2.
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+when 31.
+      REFRESH IT_FIELDS.
+      IT_FIELDS-TABNAME = 'ZBIBBUECHER'.
+      IT_FIELDS-FIELDNAME = 'ISBN'.
+      IT_FIELDS-FIELD_OBL = 'X'.
+      APPEND IT_FIELDS.
+
+CALL FUNCTION 'POPUP_GET_VALUES_DB_CHECKED'
+  EXPORTING
+   CHECK_EXISTENCE       = ' '
+    POPUP_TITLE           = 'Neuanlage ...'
+     IMPORTING
+               RETURNCODE      = I_ANSWER
+  TABLES
+    FIELDS                = it_fields
+ EXCEPTIONS
+   ERROR_IN_FIELDS       = 1
+   OTHERS                = 2
+          .
+IF SY-SUBRC <> 0.
+ MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+
+      WRITE: / 'Rückgabe des Bausteins:', I_ANSWER.
+
+
+  ENDCASE.

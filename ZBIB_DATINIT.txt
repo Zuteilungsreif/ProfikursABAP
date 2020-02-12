@@ -1,0 +1,231 @@
+*&---------------------------------------------------------------------*
+*& Report  ZBIB_DATINIT                                                    *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+*&                                                                     *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+
+report  zbib_datinit                      .
+
+data i_answer.
+tables: zbibgenres, zbibverlage, zbibbuecher, zbibkunden, zbibbestand.
+
+
+   call function 'POPUP_TO_CONFIRM_STEP'
+     exporting
+*      DEFAULTOPTION        = 'Y'
+       textline1            = 'Der Datenbestand wird neu aufgebaut'
+       textline2            = 'Wirklich löschen ??'
+       titel                = 'Bestätigung'
+       cancel_display       = ' '
+    importing
+      answer               = i_answer.
+
+
+if i_answer = 'N'.
+  write / 'Neuinilialisierung abgebrochen'.
+else.
+    delete from zbibgenres where genre <> ''.
+    delete from zbibverlage where verlag <> ''.
+    delete from zbibbuecher  where isbn <> ''.
+    delete from zbibkunden  where kundennr <> ''.
+    delete from zbibbestand where bestandsnr <> ''.
+
+    zbibgenres-genre = 'KI'. zbibgenres-genretext = 'Kinderbuch'.
+    insert zbibgenres.
+    zbibgenres-genre = 'HO'. zbibgenres-genretext = 'Horror'.
+    insert zbibgenres.
+    zbibgenres-genre = 'FA'. zbibgenres-genretext = 'Fachbuch'.
+    insert zbibgenres.
+    zbibgenres-genre = 'BE'. zbibgenres-genretext = 'Bellestristik'.
+    insert zbibgenres.
+
+    write / '4 Genres angelegt .....'.
+
+    zbibverlage-verlag = '1001'.
+    zbibverlage-verlagbez = 'Vieweg'.
+    insert zbibverlage.
+
+    zbibverlage-verlag = '1002'.
+    zbibverlage-verlagbez = 'Carlsen'.
+    insert zbibverlage.
+
+    zbibverlage-verlag = '1003'.
+    zbibverlage-verlagbez = 'Posenuckl'.
+    insert zbibverlage.
+
+    zbibverlage-verlag = '1004'.
+    zbibverlage-verlagbez = 'freier Verlag Berlin'.
+    insert zbibverlage.
+
+    zbibverlage-verlag = '1005'.
+    zbibverlage-verlagbez = 'Buchdruck AG München'.
+    insert zbibverlage.
+
+    write / '5 Verlage angelegt .....'.
+
+   zbibbuecher-isbn = '3528058781'.
+   zbibbuecher-autor = 'Theobald, Patrick'.
+   zbibbuecher-titel = 'SAP R/3 Kommunikation mit RFC und Visual Basic'.
+    zbibbuecher-verlag = '1001'.
+    zbibbuecher-genre = 'FA'.
+    insert zbibbuecher.
+
+   zbibbuecher-isbn = '3528058455'.
+   zbibbuecher-autor = 'Rottmann, Heinrich'.
+   zbibbuecher-titel = 'Visual Basic.net mit Methode'.
+    zbibbuecher-verlag = '1001'.
+    zbibbuecher-genre = 'FA'.
+    insert zbibbuecher.
+
+
+    zbibbuecher-isbn = '5439567841'.
+    zbibbuecher-autor = 'King, Rainer'.
+    zbibbuecher-titel = 'Höllentrip im Feinkostladen'.
+    zbibbuecher-verlag = '1003'.
+    zbibbuecher-genre = 'HO'.
+    insert zbibbuecher.
+
+    zbibbuecher-isbn = '3635248564'.
+    zbibbuecher-autor = 'Gubbels, Holger'.
+    zbibbuecher-titel = 'Mediziner aus Überzeugung. Chancen und Risiken'
+.
+    zbibbuecher-verlag = '1005'.
+    zbibbuecher-genre = 'FA'.
+    insert zbibbuecher.
+
+    zbibbuecher-isbn = '5362975412'.
+    zbibbuecher-autor = 'Jung, Alexander'.
+    zbibbuecher-titel = 'Das große Buch der Islandpferde'.
+    zbibbuecher-verlag = '1005'.
+    zbibbuecher-genre = 'FA'.
+    insert zbibbuecher.
+
+    zbibbuecher-isbn = '3568542631'.
+    zbibbuecher-autor = 'Voigt, Jochen'.
+    zbibbuecher-titel = 'Der kleine Pinguin'.
+    zbibbuecher-verlag = '1004'.
+    zbibbuecher-genre = 'KI'.
+    insert zbibbuecher.
+
+    zbibbuecher-isbn = '3596475211'.
+    zbibbuecher-autor = 'Straub, Olivia'.
+    zbibbuecher-titel = 'Gib mir mein Herz zurück'.
+    zbibbuecher-verlag = '1002'.
+    zbibbuecher-genre = 'BE'.
+    insert zbibbuecher.
+
+    zbibbuecher-isbn = '3245875215'.
+    zbibbuecher-autor = 'Küblböck, Stefan'.
+    zbibbuecher-titel = 'Auf dem Weg ins Tal der Träume'.
+    zbibbuecher-verlag = '1002'.
+    zbibbuecher-genre = 'BE'.
+    insert zbibbuecher.
+
+    zbibbuecher-isbn = '3245523612'.
+    zbibbuecher-autor = 'Strohhalm, Günther'.
+    zbibbuecher-titel = 'Der Seelachs'.
+    zbibbuecher-verlag = '1002'.
+    zbibbuecher-genre = 'BE'.
+    insert zbibbuecher.
+
+    zbibbuecher-isbn = '3951758694'.
+    zbibbuecher-autor = 'Husse, Hermann'.
+    zbibbuecher-titel = 'Unterm Auto'.
+    zbibbuecher-verlag = '1001'.
+    zbibbuecher-genre = 'BE'.
+    insert zbibbuecher.
+
+
+    write / '10 Bücher angelegt .....'.
+
+    zbibkunden-kundennr = '500000'..
+    zbibkunden-name = 'Theobald, Silvia'.
+    zbibkunden-strasse = 'Scheffelstr. 14'.
+    zbibkunden-plz = '70191'.
+    zbibkunden-ort = 'Backnang'.
+    insert zbibkunden.
+
+    zbibkunden-kundennr = '500001'.
+    zbibkunden-name = 'Jauch, Reinhold'.
+    zbibkunden-strasse = 'Lüdenweg 12'.
+    zbibkunden-plz = '90526'.
+    zbibkunden-ort = 'Bad Breisingen'.
+    insert zbibkunden.
+
+    zbibkunden-kundennr = '500002'.
+    zbibkunden-name = 'Schuhmacher, Heiko'.
+    zbibkunden-strasse = 'Breitscheidstr. 35'.
+    zbibkunden-plz = '70675'.
+    zbibkunden-ort = 'Stuttgart'.
+    insert zbibkunden.
+
+    zbibkunden-kundennr = '500003'.
+    zbibkunden-name = 'Schröder, Carsten'.
+    zbibkunden-strasse = 'Veteranenstr. 16'.
+    zbibkunden-plz = '70132'.
+    zbibkunden-ort = 'Stuttgart'.
+    insert zbibkunden.
+
+    zbibkunden-kundennr = '500004'.
+    zbibkunden-name = 'Gübülirü, Holgatan'.
+    zbibkunden-strasse = 'Nodbahnhofstr. 52'.
+    zbibkunden-plz = '70191'.
+    zbibkunden-ort = 'Stuttgart'.
+    insert zbibkunden.
+
+    zbibkunden-kundennr = '500005'.
+    zbibkunden-name = 'Beimer, Helga'.
+    zbibkunden-strasse = 'Lindenstr. 3'.
+    zbibkunden-plz = '89232'.
+    zbibkunden-ort = 'München'.
+    insert zbibkunden.
+
+    zbibkunden-kundennr = '500006'.
+    zbibkunden-name = 'Fischer, Samuel'.
+    zbibkunden-strasse = 'Nordstätter Str. 85'.
+    zbibkunden-plz = '76111'.
+    zbibkunden-ort = 'Stuttgart-Wunderland'.
+    insert zbibkunden.
+
+    write: / '7 Kunden angelegt'.
+
+    zbibbestand-bestandsnr = 'BE10000'.
+    zbibbestand-isbn = '3245523612'.
+    zbibbestand-status = 1.
+    insert zbibbestand.
+
+    zbibbestand-bestandsnr = 'BE10001'.
+    zbibbestand-isbn = '3245523612'.
+    zbibbestand-status = 1.
+    insert zbibbestand.
+
+    zbibbestand-bestandsnr = 'BE10002'.
+    zbibbestand-isbn = '3245875215'.
+    zbibbestand-status = 1.
+    insert zbibbestand.
+
+    zbibbestand-bestandsnr = 'FA10000'.
+    zbibbestand-isbn = '3528058781'.
+    zbibbestand-status = 1.
+    insert zbibbestand.
+
+    zbibbestand-bestandsnr = 'FA10001'.
+    zbibbestand-isbn = '3528058781'.
+    zbibbestand-status = 1.
+    insert zbibbestand.
+
+    zbibbestand-bestandsnr = 'HO10000'.
+    zbibbestand-isbn = '5439567841'.
+    zbibbestand-status = 1.
+    insert zbibbestand.
+
+        write: / '6 Bestandssätze angelegt'.
+
+endif.
+
+
+             .
+
+          .

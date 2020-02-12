@@ -1,0 +1,40 @@
+FUNCTION z_bib_v1.
+*"----------------------------------------------------------------------
+*"*"Verbuchungsfunktionsbaustein:
+*"
+*"*"Lokale Schnittstelle:
+*"  IMPORTING
+*"     VALUE(I_BESTANDSNR) LIKE  ZBIBBESTAND-BESTANDSNR
+*"     VALUE(I_KUNDENNR) LIKE  ZBIBKUNDEN-KUNDENNR
+*"  EXCEPTIONS
+*"      BESTAND_FALSCH
+*"      FALSCHER_STATUS
+*"----------------------------------------------------------------------
+
+  DATA wa_bestand LIKE zbibbestand.
+  DATA wa_bew LIKE zbibbew.
+
+  SELECT SINGLE * INTO wa_bestand
+  FROM zbibbestand WHERE bestandsnr = i_bestandsnr .
+
+  IF wa_bestand-status NE 1.
+    RAISE bestand_falsch.
+  ENDIF.
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr = '01'
+      object      = 'ZBIBBEW'
+    IMPORTING
+      number      = wa_bew-id.
+
+
+  wa_bew-bestandsnr = i_bestandsnr.
+  wa_bew-dataus = sy-datum.
+  INSERT zbibbew FROM wa_bew.
+
+  wa_bestand-status = 2. " ausgeliehen
+  wa_bestand-kundennr = i_kundennr.
+  UPDATE zbibbestand FROM wa_bestand.
+
+ENDFUNCTION.

@@ -1,0 +1,77 @@
+*&---------------------------------------------------------*
+*& Report  Z_AO_02                                         *
+*& ABAP Objects Demo                                       *
+*& einfache Klasse mit zwei Methoden                       *
+*&---------------------------------------------------------*
+
+REPORT  z_ao_02.
+
+tables zbibbuecher.
+
+TYPES boolean(1) TYPE c.
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto DEFINITION.
+  PUBLIC SECTION.
+    DATA besitzer(20).
+
+    METHODS einzahlen
+      IMPORTING
+        betrag TYPE i
+    RETURNING value(erfolg) TYPE boolean.
+
+
+    METHODS kontostandabrufen
+      EXPORTING
+        betrag TYPE i.
+
+  PRIVATE SECTION.
+    DATA  p_kontostand TYPE i VALUE 0.
+
+ENDCLASS.                    "lcl_Konto DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto IMPLEMENTATION.
+
+  METHOD einzahlen.
+    IF  betrag > 1000. erfolg = ''. RETURN. ENDIF.
+    p_kontostand = p_kontostand + betrag.
+    erfolg = 'X'.
+  ENDMETHOD.                    "einzahlen
+
+  METHOD kontostandabrufen.
+    betrag = p_kontostand.
+  ENDMETHOD.                    "kontostandabrufen
+ENDCLASS.                    "lcl_konto IMPLEMENTATION
+
+
+
+DATA ref_konto TYPE REF TO lcl_konto.
+
+START-OF-SELECTION.
+
+  CREATE OBJECT ref_konto.
+
+  ref_konto->besitzer = 'A. Jung'.
+
+  IF ref_konto->einzahlen( 100 ) = 'X'.
+    WRITE 'erfolgreich gebucht'.
+  ELSE.
+    WRITE 'nicht erfolgreich'.
+  ENDIF.
+
+  DATA kontostand TYPE i.
+
+  CALL METHOD ref_konto->kontostandabrufen
+    IMPORTING
+      betrag = kontostand.
+
+  WRITE: / 'aktueller Kontostand: ', kontostand.

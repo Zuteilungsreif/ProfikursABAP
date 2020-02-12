@@ -1,0 +1,84 @@
+*&---------------------------------------------------*
+*& Report  ZBIB_OI03                                 *
+*&---------------------------------------------------*
+
+REPORT  zbib_oi03              .
+
+INCLUDE ole2incl.
+
+TABLES: zbibkunden.
+
+DATA it_kunden LIKE zbibkunden OCCURS 0 WITH HEADER LINE.
+
+DATA: wordobj TYPE ole2_object.
+DATA: worddocs TYPE ole2_object.
+DATA: worddoc TYPE ole2_object.
+DATA: wordmailing TYPE ole2_object.
+DATA: wordsel TYPE ole2_object.
+
+DATA: ort(100).
+
+CREATE OBJECT wordobj 'Word.Application'.
+PERFORM checkerror USING 'Objekt instanzzieren'.
+
+CALL METHOD OF wordobj 'Documents' = worddocs.
+CALL METHOD OF worddocs 'Add' = worddoc.
+
+GET PROPERTY OF wordobj 'MailingLabel' = wordmailing.
+SET PROPERTY OF wordmailing 'DefaultPrintBarCode' = 0.
+CALL METHOD OF wordmailing 'CreateNewDocument'
+  EXPORTING
+    #1 = 'Zweckform 3448'           " name
+    #2 = ''.           " Address
+*       #3 = ''                         " autotext
+*       #4 = 0                          " extractaddress
+*       #5 = 4                          " 4 = ManualFeed
+*       #6 = 0                          " PrintEPostageLabel
+*       #7 = 0.                         " vertical.
+PERFORM checkerror USING 'CreateNewDocument'.
+
+GET PROPERTY OF wordobj 'Selection' = wordsel.
+
+SELECT * INTO TABLE it_kunden FROM zbibkunden.
+
+LOOP AT it_kunden.
+  CALL METHOD OF wordsel 'TypeText'
+    EXPORTING
+      #1 = it_kunden-name.
+  CALL METHOD OF wordsel 'TypeParagraph'.
+  CALL METHOD OF wordsel 'TypeText'
+    EXPORTING
+      #1 = it_kunden-strasse.
+  CALL METHOD OF wordsel 'TypeParagraph'.
+  CALL METHOD OF wordsel 'TypeParagraph'.
+  CONCATENATE it_kunden-plz it_kunden-ort INTO ort
+      SEPARATED BY ' '.
+  CALL METHOD OF wordsel 'TypeText'
+    EXPORTING
+      #1 = ort.
+  CALL METHOD OF wordsel 'MoveRight'
+    EXPORTING
+      #1 = 12
+      #2 = 1.
+ENDLOOP.
+
+
+CALL METHOD OF worddoc 'Close'.
+SET PROPERTY OF wordobj 'Visible' = 1.
+PERFORM checkerror USING 'WordObj.Visible'.
+
+FREE OBJECT wordobj.
+FREE OBJECT worddocs.
+FREE OBJECT worddoc.
+FREE OBJECT wordmailing.
+FREE OBJECT wordsel.
+
+WRITE: / 'Objekt entladen'.
+
+************************************************************************
+FORM checkerror USING text.
+  IF sy-subrc <> 0.
+    WRITE: / 'Fehler bei: ',text, sy-subrc.
+    STOP.
+  ENDIF.
+ENDFORM.                               " ERR_HDL

@@ -1,0 +1,85 @@
+*&---------------------------------------------------------*
+*& Report  Z_AO_06                                         *
+*& ABAP Objects Demo                                       *
+*& einfache Klassen mit Vererbung                          *
+*&---------------------------------------------------------*
+
+REPORT  z_ao_06.
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto DEFINITION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto DEFINITION.
+  PUBLIC SECTION.
+
+    METHODS einzahlen
+      IMPORTING
+        betrag TYPE i.
+    EVENTS konto_voll
+      EXPORTING
+        value(kontostand) TYPE i.
+
+  PRIVATE SECTION.
+    DATA p_kontostand TYPE i.
+
+ENDCLASS.                    "lcl_konto DEFINITION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_konto IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_konto IMPLEMENTATION.
+
+  METHOD einzahlen.
+    p_kontostand = p_kontostand + betrag.
+    IF p_kontostand > 10000.
+      RAISE EVENT konto_voll
+        EXPORTING kontostand = p_kontostand.
+    ENDIF.
+  ENDMETHOD.                    "einzahlen
+
+ENDCLASS.                    "lcl_konto IMPLEMENTATION
+
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_girokonto IMPLEMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_girokonto DEFINITION INHERITING FROM lcl_konto.
+
+  PUBLIC SECTION.
+
+    METHODS einzahlen REDEFINITION.
+
+ENDCLASS.                    "lcl_girokonto IMPLEMENTATION
+
+*---------------------------------------------------------------------*
+*       CLASS lcl_girokonto  IMPLMENTATION
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+CLASS lcl_girokonto IMPLEMENTATION.
+
+  METHOD einzahlen.
+
+    DATA neuerbetrag TYPE i.
+    neuerbetrag = betrag - 1.
+
+    CALL METHOD super->einzahlen
+      EXPORTING
+        betrag = neuerbetrag.
+
+
+  ENDMETHOD.                    "einzahlen
+
+ENDCLASS.                    "lcl_girokonto  IMPLMENTATION
+
+
+
+
+
+START-OF-SELECTION.
